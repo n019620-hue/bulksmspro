@@ -1,70 +1,73 @@
 {% extends "base.html" %}
-<a href="/settings">WhatsApp Settings</a>
-
-{% block title %}Client Dashboard - PR Tech Connect{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card bg-info text-white p-3 mb-4">
-            <h5>Available Credits</h5>
-            <h2>{{ current_user.credits }}</h2>
-        </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card p-4">
-            <h4>Bulk Messaging Panel</h4>
-            <form action="{{ url_for('send_bulk') }}" method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label class="form-label">Select Service</label>
-                    <div class="row">
-                        <div class="col-6">
-                            <input type="radio" class="btn-check" name="msg_type" id="whatsapp" value="whatsapp" checked>
-                            <label class="btn btn-outline-success w-100" for="whatsapp">
-                                <i class="fab fa-whatsapp me-2"></i>WhatsApp
-                            </label>
-                        </div>
-                        <div class="col-6">
-                            <input type="radio" class="btn-check" name="msg_type" id="sms" value="sms">
-                            <label class="btn btn-outline-primary w-100" for="sms">
-                                <i class="fas fa-sms me-2"></i>SMS
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
+<div class="container mt-4">
+
+    <h2 class="mb-4">Client Dashboard</h2>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- SEND TEXT BULK -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            Send Bulk Text (WhatsApp)
+        </div>
+        <div class="card-body">
+            <form action="/send-bulk-text" method="POST" enctype="multipart/form-data">
+
                 <div class="mb-3">
                     <label class="form-label">Upload CSV File (Numbers in first column)</label>
-                    <input type="file" name="file" class="form-control" accept=".csv" required>
-                    <small class="text-muted">Format: One mobile number per line in the first column.</small>
+                    <input type="file" name="csv_file" class="form-control" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Message Content</label>
-                    <textarea name="message" class="form-control" rows="5" placeholder="Type your message here..." required></textarea>
+                    <label class="form-label">Message</label>
+                    <textarea name="message" class="form-control" rows="4" required></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2">
-                    <i class="fas fa-paper-plane me-2"></i>Send Bulk Messages
+                <button type="submit" class="btn btn-primary">
+                    Send Bulk Text
                 </button>
             </form>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card p-4">
-            <h5>Instructions</h5>
-            <ul class="small">
-                <li>Prepare a CSV file with mobile numbers.</li>
-                <li>Numbers should include country code (e.g., 919876543210).</li>
-                <li>1 credit will be deducted per successful message.</li>
-                <li>Ensure you have enough credits before sending.</li>
-                <li>WhatsApp messages use the Meta Cloud API.</li>
-                <li>SMS messages use the configured SMS Gateway.</li>
-            </ul>
+
+    <!-- SEND BULK MEDIA -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            Send Bulk Media (Image / PDF)
+        </div>
+        <div class="card-body">
+            <form action="/send-bulk-media" method="POST" enctype="multipart/form-data">
+
+                <div class="mb-3">
+                    <label class="form-label">Upload CSV File (Only Numbers)</label>
+                    <input type="file" name="csv_file" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Upload Image or PDF</label>
+                    <input type="file" name="media_file" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    Send Bulk Media
+                </button>
+            </form>
         </div>
     </div>
+
 </div>
+
 {% endblock %}
