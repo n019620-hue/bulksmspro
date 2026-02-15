@@ -66,8 +66,12 @@ def logout():
 @login_required
 def dashboard():
     return render_template("client/dashboard.html")
-
+    
 # ---------------- SAVE WHATSAPP SETTINGS ---------------- #
+@app.route("/whatsapp-settings")
+@login_required
+def whatsapp_settings():
+    return render_template("client/whatsapp_settings.html")
 @app.route("/save-whatsapp-settings", methods=["POST"])
 @login_required
 def save_whatsapp_settings():
@@ -77,14 +81,14 @@ def save_whatsapp_settings():
 
     if not token or not phone_id:
         flash("Please enter Token and Phone ID", "danger")
-        return redirect(url_for("dashboard"))
+          return redirect(url_for("whatsapp_settings"))
 
     current_user.whatsapp_token = token
     current_user.whatsapp_phone_id = phone_id
     db.session.commit()
 
     flash("WhatsApp settings saved successfully!", "success")
-    return redirect(url_for("dashboard"))
+      return redirect(url_for("whatsapp_settings"))
     
    # --------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
 def send_whatsapp_text(phone, message):
