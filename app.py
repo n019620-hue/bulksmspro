@@ -67,6 +67,30 @@ def logout():
 @login_required
 def dashboard():
     return render_template("client/dashboard.html")
+    # ---------------- SEND SINGLE MESSAGE ---------------- #
+@app.route("/send-single-message", methods=["POST"])
+@login_required
+def send_single_message():
+
+    phone = request.form.get("phone")
+    message = request.form.get("message")
+
+    if not phone or not message:
+        flash("Enter phone number and message", "danger")
+        return redirect(url_for("dashboard"))
+
+    if current_user.credits <= 0:
+        flash("No credits remaining!", "danger")
+        return redirect(url_for("dashboard"))
+
+    response = send_whatsapp_text(phone, message)
+
+    if response.get("error"):
+        flash(response["error"], "danger")
+    else:
+        flash("Message sent successfully ✅", "success")
+
+    return redirect(url_for("dashboard"))
 
 # ---------------- WHATSAPP SETTINGS ---------------- #
 @app.route("/whatsapp-settings")
