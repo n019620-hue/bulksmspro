@@ -48,6 +48,35 @@
         </form>
     </div>
 </div>
+    <!-- SINGLE MESSAGE SECTION -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        Send Single WhatsApp Message
+    </div>
+    <div class="card-body">
+
+        <form method="POST" action="{{ url_for('send_single_message') }}">
+
+            <div class="mb-3">
+                <label class="form-label">Phone Number (with country code)</label>
+                <input type="text" name="phone" class="form-control"
+                       placeholder="Example: 919876543210" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Message</label>
+                <textarea name="message" class="form-control"
+                          rows="3" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-dark">
+                Send Message
+            </button>
+
+        </form>
+
+    </div>
+</div>
     <!-- SEND TEXT BULK -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
