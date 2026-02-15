@@ -16,7 +16,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-    # Default Admin Create
+    # Create default admin
     admin = User.query.filter_by(username="admin").first()
     if admin is None:
         default_user = User(username="admin", credits=100)
@@ -129,20 +129,19 @@ def send_test_message():
 
     response = send_whatsapp_text(test_number, "Test message from PR Tech Connect 🚀")
 
-    if "error" in response:
+    if response.get("error"):
         flash(response["error"], "danger")
     else:
         flash("Test message sent successfully ✅", "success")
 
     return redirect(url_for("whatsapp_settings"))
 
-# ---------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
+# ---------------- SEND WHATSAPP TEXT ---------------- #
 def send_whatsapp_text(phone, message):
 
     if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
         return {"error": "Token or Phone ID missing"}
 
-    # CREDIT CHECK
     if current_user.credits <= 0:
         return {"error": "No credits remaining"}
 
@@ -159,6 +158,45 @@ def send_whatsapp_text(phone, message):
         "type": "text",
         "text": {"body": message}
     }
+
+    response = requests.post(url, json=data, headers=headers)
+
+    if response.status_code == 200:
+        current_user.credits -= 1
+        db.session.commit()
+
+    return response.json()
+
+# ---------------- SEND WHATSAPP MEDIA ---------------- #
+def send_whatsapp_media(phone, media_url):
+
+    if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
+        return {"error": "Token or Phone ID missing"}
+
+    if current_user.credits <= 0:
+        return {"error": "No credits remaining"}
+
+    url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {current_user.whatsapp_token}",
+        "Content-Type": "application/json"
+    }
+
+    if media_url.lower().endswith(".pdf"):
+        data = {
+            "messaging_product": "whatsapp",
+            "to": phone,
+            "type": "document",
+            "document": {"link": media_url}
+        }
+    else:
+        data = {
+            "messaging_product": "whatsapp",
+            "to": phone,
+            "type": "image",
+            "image": {"link": media_url}
+        }
 
     response = requests.post(url, json=data, headers=headers)
 
@@ -187,15 +225,15 @@ def send_bulk_text():
         if row:
             numbers.append(row[0].strip())
 
-    for number in numbers:
-        if current_user.credits <= 0:
-            flash("Credits finished! Recharge required.", "danger")
-            break
+    if current_user.credits < len(numbers):
+        flash("Not enough credits!", "danger")
+        return redirect(url_for("dashboard"))
 
+    for number in numbers:
         send_whatsapp_text(number, message)
         time.sleep(1)
 
-    flash("Bulk Text Process Completed!", "success")
+    flash("Bulk Text Sent Successfully ✅", "success")
     return redirect(url_for("dashboard"))
 
 # ---------------- BULK MEDIA ---------------- #
@@ -226,15 +264,15 @@ def send_bulk_media():
         if row:
             numbers.append(row[0].strip())
 
-    for number in numbers:
-        if current_user.credits <= 0:
-            flash("Credits finished! Recharge required.", "danger")
-            break
+    if current_user.credits < len(numbers):
+        flash("Not enough credits!", "danger")
+        return redirect(url_for("dashboard"))
 
-        send_whatsapp_text(number, media_url)
+    for number in numbers:
+        send_whatsapp_media(number, media_url)
         time.sleep(1)
 
-    flash("Bulk Media Process Completed!", "success")
+    flash("Bulk Media Sent Successfully ✅", "success")
     return redirect(url_for("dashboard"))
 
 # ---------------- RUN ---------------- #
