@@ -179,7 +179,7 @@ def send_bulk_media():
 # ---------------- RUN ---------------- #
 
 import os
-    @app.route("/")
+@app.route("/")
 def index():
     return redirect(url_for("login"))
 
