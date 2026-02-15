@@ -22,6 +22,8 @@ class User(UserMixin, db.Model):
     whatsapp_token = db.Column(db.Text, nullable=True)
     whatsapp_phone_id = db.Column(db.String(100), nullable=True)
 
+    credits = db.Column(db.Integer, default=0)
+
     # SMS Settings
     sms_api_url = db.Column(db.Text, nullable=True)
     sms_api_key = db.Column(db.Text, nullable=True)
