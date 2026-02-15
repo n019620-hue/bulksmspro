@@ -22,13 +22,42 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# ---------------- HOME ---------------- #
+@app.route("/")
+def home():
+    return redirect(url_for("login"))
+
+# ---------------- LOGIN ---------------- #
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(email=email, password=password).first()
+
+        if user:
+            login_user(user)
+            return redirect(url_for("dashboard"))
+        else:
+            flash("Invalid credentials", "danger")
+
+    return render_template("login.html")
+
+# ---------------- LOGOUT ---------------- #
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("login"))
+
 # ---------------- DASHBOARD ---------------- #
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    return render_template("client/dashboard.html")
 
-# ---------------- SEND TEXT MESSAGE ---------------- #
+# ---------------- SEND TEXT FUNCTION ---------------- #
 def send_whatsapp_text(phone, message):
 
     if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
@@ -86,6 +115,32 @@ def send_whatsapp_media(phone, media_url):
     response = requests.post(url, json=data, headers=headers)
     return response.json()
 
+# ---------------- BULK TEXT ROUTE ---------------- #
+@app.route("/send-bulk-text", methods=["POST"])
+@login_required
+def send_bulk_text():
+
+    csv_file = request.files.get("csv_file")
+    message = request.form.get("message")
+
+    if not csv_file or not message:
+        flash("Upload CSV and enter message", "danger")
+        return redirect(url_for("dashboard"))
+
+    numbers = []
+    csv_reader = csv.reader(csv_file.stream.read().decode("utf-8").splitlines())
+
+    for row in csv_reader:
+        if row:
+            numbers.append(row[0].strip())
+
+    for number in numbers:
+        send_whatsapp_text(number, message)
+        time.sleep(1)
+
+    flash("Bulk Text Sent Successfully!", "success")
+    return redirect(url_for("dashboard"))
+
 # ---------------- BULK MEDIA ROUTE ---------------- #
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -121,6 +176,6 @@ def send_bulk_media():
     flash("Bulk Media Sent Successfully!", "success")
     return redirect(url_for("dashboard"))
 
-# ---------------- MAIN ---------------- #
+# ---------------- RUN ---------------- #
 if __name__ == "__main__":
     app.run(debug=True)
