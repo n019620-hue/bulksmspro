@@ -1,1 +1,40 @@
 
+{% extends "base.html" %}
+
+{% block title %}WhatsApp Settings{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">WhatsApp API Settings</h5>
+    </div>
+
+    <div class="card-body">
+
+        <form method="POST" action="{{ url_for('save_whatsapp_settings') }}">
+
+            <div class="mb-3">
+                <label class="form-label">WhatsApp Access Token</label>
+                <input type="text" name="whatsapp_token"
+                       value="{{ current_user.whatsapp_token or '' }}"
+                       class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">WhatsApp Phone Number ID</label>
+                <input type="text" name="whatsapp_phone_id"
+                       value="{{ current_user.whatsapp_phone_id or '' }}"
+                       class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Save Settings
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
