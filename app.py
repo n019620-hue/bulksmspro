@@ -16,6 +16,14 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+    # Create default admin if not exists
+    if not User.query.first():
+        default_user = User(username="admin")
+        default_user.set_password("1234")
+        db.session.add(default_user)
+        db.session.commit()
+        print("Default admin created")
+
 # ---------------- LOGIN MANAGER ---------------- #
 login_manager = LoginManager()
 login_manager.login_view = "login"
