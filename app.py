@@ -16,9 +16,10 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+    # Default Admin Create
     admin = User.query.filter_by(username="admin").first()
     if admin is None:
-        default_user = User(username="admin")
+        default_user = User(username="admin", credits=100)
         default_user.set_password("1234")
         db.session.add(default_user)
         db.session.commit()
@@ -32,12 +33,10 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
 # ---------------- HOME ---------------- #
 @app.route("/")
 def home():
     return redirect(url_for("login"))
-
 
 # ---------------- LOGIN ---------------- #
 @app.route("/login", methods=["GET", "POST"])
@@ -56,7 +55,6 @@ def login():
 
     return render_template("login.html")
 
-
 # ---------------- LOGOUT ---------------- #
 @app.route("/logout")
 @login_required
@@ -64,20 +62,17 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
-
 # ---------------- DASHBOARD ---------------- #
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("client/dashboard.html")
 
-
 # ---------------- WHATSAPP SETTINGS ---------------- #
 @app.route("/whatsapp-settings")
 @login_required
 def whatsapp_settings():
     return render_template("client/whatsapp_settings.html")
-
 
 @app.route("/save-whatsapp-settings", methods=["POST"])
 @login_required
@@ -97,7 +92,6 @@ def save_whatsapp_settings():
     flash("WhatsApp settings saved successfully!", "success")
     return redirect(url_for("whatsapp_settings"))
 
-
 # ---------------- VERIFY TOKEN ---------------- #
 @app.route("/verify-token")
 @login_required
@@ -107,24 +101,20 @@ def verify_token():
     phone_id = current_user.whatsapp_phone_id
 
     if not token or not phone_id:
-        flash("Save Token and Phone ID first", "danger")
+        flash("Save Token & Phone ID first", "danger")
         return redirect(url_for("whatsapp_settings"))
 
     url = f"https://graph.facebook.com/v17.0/{phone_id}?fields=display_phone_number"
-
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
-        flash("WhatsApp Token Verified Successfully ✅", "success")
+        flash("Token Verified Successfully ✅", "success")
     else:
         flash("Invalid Token or Phone ID ❌", "danger")
 
     return redirect(url_for("whatsapp_settings"))
-
 
 # ---------------- SEND TEST MESSAGE ---------------- #
 @app.route("/send-test-message", methods=["POST"])
@@ -139,19 +129,22 @@ def send_test_message():
 
     response = send_whatsapp_text(test_number, "Test message from PR Tech Connect 🚀")
 
-    if response.get("error"):
-        flash("Failed to send test message ❌", "danger")
+    if "error" in response:
+        flash(response["error"], "danger")
     else:
         flash("Test message sent successfully ✅", "success")
 
     return redirect(url_for("whatsapp_settings"))
 
-
-# ---------------- SEND WHATSAPP TEXT ---------------- #
+# ---------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
 def send_whatsapp_text(phone, message):
 
     if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
         return {"error": "Token or Phone ID missing"}
+
+    # CREDIT CHECK
+    if current_user.credits <= 0:
+        return {"error": "No credits remaining"}
 
     url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
 
@@ -164,51 +157,16 @@ def send_whatsapp_text(phone, message):
         "messaging_product": "whatsapp",
         "to": phone,
         "type": "text",
-        "text": {
-            "body": message
-        }
+        "text": {"body": message}
     }
 
     response = requests.post(url, json=data, headers=headers)
+
+    if response.status_code == 200:
+        current_user.credits -= 1
+        db.session.commit()
+
     return response.json()
-
-
-# ---------------- SEND WHATSAPP MEDIA ---------------- #
-def send_whatsapp_media(phone, media_url):
-
-    if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
-        return {"error": "Token or Phone ID missing"}
-
-    url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
-
-    headers = {
-        "Authorization": f"Bearer {current_user.whatsapp_token}",
-        "Content-Type": "application/json"
-    }
-
-    if media_url.lower().endswith(".pdf"):
-        data = {
-            "messaging_product": "whatsapp",
-            "to": phone,
-            "type": "document",
-            "document": {
-                "link": media_url,
-                "filename": "document.pdf"
-            }
-        }
-    else:
-        data = {
-            "messaging_product": "whatsapp",
-            "to": phone,
-            "type": "image",
-            "image": {
-                "link": media_url
-            }
-        }
-
-    response = requests.post(url, json=data, headers=headers)
-    return response.json()
-
 
 # ---------------- BULK TEXT ---------------- #
 @app.route("/send-bulk-text", methods=["POST"])
@@ -230,12 +188,15 @@ def send_bulk_text():
             numbers.append(row[0].strip())
 
     for number in numbers:
+        if current_user.credits <= 0:
+            flash("Credits finished! Recharge required.", "danger")
+            break
+
         send_whatsapp_text(number, message)
         time.sleep(1)
 
-    flash("Bulk Text Sent Successfully!", "success")
+    flash("Bulk Text Process Completed!", "success")
     return redirect(url_for("dashboard"))
-
 
 # ---------------- BULK MEDIA ---------------- #
 UPLOAD_FOLDER = "static/uploads"
@@ -266,12 +227,15 @@ def send_bulk_media():
             numbers.append(row[0].strip())
 
     for number in numbers:
-        send_whatsapp_media(number, media_url)
+        if current_user.credits <= 0:
+            flash("Credits finished! Recharge required.", "danger")
+            break
+
+        send_whatsapp_text(number, media_url)
         time.sleep(1)
 
-    flash("Bulk Media Sent Successfully!", "success")
+    flash("Bulk Media Process Completed!", "success")
     return redirect(url_for("dashboard"))
-
 
 # ---------------- RUN ---------------- #
 if __name__ == "__main__":
