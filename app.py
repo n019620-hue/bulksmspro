@@ -17,7 +17,7 @@ with app.app_context():
     db.create_all()
 
     # Create default admin if not exists
-    if not User.query.first():
+if not User.query.filter_by(username="admin").first():
         default_user = User(username="admin")
         default_user.set_password("1234")
         db.session.add(default_user)
