@@ -32,10 +32,12 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 # ---------------- HOME ---------------- #
 @app.route("/")
 def home():
     return redirect(url_for("login"))
+
 
 # ---------------- LOGIN ---------------- #
 @app.route("/login", methods=["GET", "POST"])
@@ -54,6 +56,7 @@ def login():
 
     return render_template("login.html")
 
+
 # ---------------- LOGOUT ---------------- #
 @app.route("/logout")
 @login_required
@@ -61,19 +64,21 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
+
 # ---------------- DASHBOARD ---------------- #
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("client/dashboard.html")
 
-# ---------------- WHATSAPP SETTINGS PAGE ---------------- #
+
+# ---------------- WHATSAPP SETTINGS ---------------- #
 @app.route("/whatsapp-settings")
 @login_required
 def whatsapp_settings():
     return render_template("client/whatsapp_settings.html")
 
-# ---------------- SAVE WHATSAPP SETTINGS ---------------- #
+
 @app.route("/save-whatsapp-settings", methods=["POST"])
 @login_required
 def save_whatsapp_settings():
@@ -92,6 +97,7 @@ def save_whatsapp_settings():
     flash("WhatsApp settings saved successfully!", "success")
     return redirect(url_for("whatsapp_settings"))
 
+
 # ---------------- VERIFY TOKEN ---------------- #
 @app.route("/verify-token")
 @login_required
@@ -101,7 +107,7 @@ def verify_token():
     phone_id = current_user.whatsapp_phone_id
 
     if not token or not phone_id:
-        flash("Please save Token and Phone ID first", "danger")
+        flash("Save Token and Phone ID first", "danger")
         return redirect(url_for("whatsapp_settings"))
 
     url = f"https://graph.facebook.com/v17.0/{phone_id}?fields=display_phone_number"
@@ -119,6 +125,7 @@ def verify_token():
 
     return redirect(url_for("whatsapp_settings"))
 
+
 # ---------------- SEND TEST MESSAGE ---------------- #
 @app.route("/send-test-message", methods=["POST"])
 @login_required
@@ -132,14 +139,15 @@ def send_test_message():
 
     response = send_whatsapp_text(test_number, "Test message from PR Tech Connect 🚀")
 
-    if "error" in response:
+    if response.get("error"):
         flash("Failed to send test message ❌", "danger")
     else:
         flash("Test message sent successfully ✅", "success")
 
     return redirect(url_for("whatsapp_settings"))
 
-# ---------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
+
+# ---------------- SEND WHATSAPP TEXT ---------------- #
 def send_whatsapp_text(phone, message):
 
     if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
@@ -164,8 +172,12 @@ def send_whatsapp_text(phone, message):
     response = requests.post(url, json=data, headers=headers)
     return response.json()
 
-# ---------------- SEND WHATSAPP MEDIA FUNCTION ---------------- #
+
+# ---------------- SEND WHATSAPP MEDIA ---------------- #
 def send_whatsapp_media(phone, media_url):
+
+    if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
+        return {"error": "Token or Phone ID missing"}
 
     url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
 
@@ -197,7 +209,8 @@ def send_whatsapp_media(phone, media_url):
     response = requests.post(url, json=data, headers=headers)
     return response.json()
 
-# ---------------- BULK TEXT ROUTE ---------------- #
+
+# ---------------- BULK TEXT ---------------- #
 @app.route("/send-bulk-text", methods=["POST"])
 @login_required
 def send_bulk_text():
@@ -223,7 +236,8 @@ def send_bulk_text():
     flash("Bulk Text Sent Successfully!", "success")
     return redirect(url_for("dashboard"))
 
-# ---------------- BULK MEDIA ROUTE ---------------- #
+
+# ---------------- BULK MEDIA ---------------- #
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -257,6 +271,7 @@ def send_bulk_media():
 
     flash("Bulk Media Sent Successfully!", "success")
     return redirect(url_for("dashboard"))
+
 
 # ---------------- RUN ---------------- #
 if __name__ == "__main__":
