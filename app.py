@@ -66,12 +66,14 @@ def logout():
 @login_required
 def dashboard():
     return render_template("client/dashboard.html")
-    
-# ---------------- SAVE WHATSAPP SETTINGS ---------------- #
+
+# ---------------- WHATSAPP SETTINGS PAGE ---------------- #
 @app.route("/whatsapp-settings")
 @login_required
 def whatsapp_settings():
     return render_template("client/whatsapp_settings.html")
+
+# ---------------- SAVE WHATSAPP SETTINGS ---------------- #
 @app.route("/save-whatsapp-settings", methods=["POST"])
 @login_required
 def save_whatsapp_settings():
@@ -81,16 +83,16 @@ def save_whatsapp_settings():
 
     if not token or not phone_id:
         flash("Please enter Token and Phone ID", "danger")
-          return redirect(url_for("whatsapp_settings"))
+        return redirect(url_for("whatsapp_settings"))
 
     current_user.whatsapp_token = token
     current_user.whatsapp_phone_id = phone_id
     db.session.commit()
 
     flash("WhatsApp settings saved successfully!", "success")
-      return redirect(url_for("whatsapp_settings"))
-    
-   # --------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
+    return redirect(url_for("whatsapp_settings"))
+
+# ---------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
 def send_whatsapp_text(phone, message):
 
     if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
@@ -117,6 +119,9 @@ def send_whatsapp_text(phone, message):
 
 # ---------------- SEND WHATSAPP MEDIA FUNCTION ---------------- #
 def send_whatsapp_media(phone, media_url):
+
+    if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
+        return {"error": "Token or Phone ID missing"}
 
     url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
 
