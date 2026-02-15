@@ -92,6 +92,53 @@ def save_whatsapp_settings():
     flash("WhatsApp settings saved successfully!", "success")
     return redirect(url_for("whatsapp_settings"))
 
+# ---------------- VERIFY TOKEN ---------------- #
+@app.route("/verify-token")
+@login_required
+def verify_token():
+
+    token = current_user.whatsapp_token
+    phone_id = current_user.whatsapp_phone_id
+
+    if not token or not phone_id:
+        flash("Please save Token and Phone ID first", "danger")
+        return redirect(url_for("whatsapp_settings"))
+
+    url = f"https://graph.facebook.com/v17.0/{phone_id}?fields=display_phone_number"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        flash("WhatsApp Token Verified Successfully ✅", "success")
+    else:
+        flash("Invalid Token or Phone ID ❌", "danger")
+
+    return redirect(url_for("whatsapp_settings"))
+
+# ---------------- SEND TEST MESSAGE ---------------- #
+@app.route("/send-test-message", methods=["POST"])
+@login_required
+def send_test_message():
+
+    test_number = request.form.get("test_number")
+
+    if not test_number:
+        flash("Enter test number", "danger")
+        return redirect(url_for("whatsapp_settings"))
+
+    response = send_whatsapp_text(test_number, "Test message from PR Tech Connect 🚀")
+
+    if "error" in response:
+        flash("Failed to send test message ❌", "danger")
+    else:
+        flash("Test message sent successfully ✅", "success")
+
+    return redirect(url_for("whatsapp_settings"))
+
 # ---------------- SEND WHATSAPP TEXT FUNCTION ---------------- #
 def send_whatsapp_text(phone, message):
 
@@ -119,9 +166,6 @@ def send_whatsapp_text(phone, message):
 
 # ---------------- SEND WHATSAPP MEDIA FUNCTION ---------------- #
 def send_whatsapp_media(phone, media_url):
-
-    if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
-        return {"error": "Token or Phone ID missing"}
 
     url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
 
@@ -216,4 +260,5 @@ def send_bulk_media():
 
 # ---------------- RUN ---------------- #
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
