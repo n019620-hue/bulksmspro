@@ -177,5 +177,3 @@ def send_bulk_media():
     return redirect(url_for("dashboard"))
 
 # ---------------- RUN ---------------- #
-if __name__ == "__main__":
-    app.run(debug=True)
