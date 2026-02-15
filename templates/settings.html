@@ -1,0 +1,11 @@
+<h2>WhatsApp Settings</h2>
+
+<form method="POST">
+    <label>WhatsApp Access Token</label><br>
+    <textarea name="whatsapp_token" rows="4" cols="50">{{ current_user.whatsapp_token or '' }}</textarea><br><br>
+
+    <label>WhatsApp Phone Number ID</label><br>
+    <input type="text" name="whatsapp_phone_id" value="{{ current_user.whatsapp_phone_id or '' }}"><br><br>
+
+    <button type="submit">Save Settings</button>
+</form>

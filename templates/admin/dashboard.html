@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - PR Tech Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white p-3">
+            <h5>Total Clients</h5>
+            <h2>{{ total_users }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h4>Manage Users</h4>
+            <table class="table table-hover mt-3">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Credits</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.credits }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addCreditsModal{{ user.id }}">
+                                <i class="fas fa-plus"></i> Credits
+                            </button>
+                            <a href="{{ url_for('delete_user', user_id=user.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Add Credits Modal -->
+                    <div class="modal fade" id="addCreditsModal{{ user.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form action="{{ url_for('add_credits') }}" method="POST">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Add Credits to {{ user.username }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                        <div class="mb-3">
+                                            <label class="form-label">Amount</label>
+                                            <input type="number" name="amount" class="form-control" required min="1">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Add Credits</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h4>Create Client</h4>
+            <form action="{{ url_for('create_user') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Initial Credits</label>
+                    <input type="number" name="credits" class="form-control" value="0">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create User</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
