@@ -14,6 +14,7 @@ app.config.from_object(Config)
 db.init_app(app)
 
 # ---------------- LOGIN MANAGER ---------------- #
+
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(app)
@@ -23,11 +24,13 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # ---------------- HOME ---------------- #
+
 @app.route("/")
 def home():
     return redirect(url_for("login"))
 
 # ---------------- LOGIN ---------------- #
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -45,6 +48,7 @@ def login():
     return render_template("login.html")
 
 # ---------------- LOGOUT ---------------- #
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -52,12 +56,14 @@ def logout():
     return redirect(url_for("login"))
 
 # ---------------- DASHBOARD ---------------- #
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("client/dashboard.html")
 
 # ---------------- SEND TEXT FUNCTION ---------------- #
+
 def send_whatsapp_text(phone, message):
 
     if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
@@ -83,7 +89,11 @@ def send_whatsapp_text(phone, message):
     return response.json()
 
 # ---------------- SEND MEDIA FUNCTION ---------------- #
+
 def send_whatsapp_media(phone, media_url):
+
+    if not current_user.whatsapp_token or not current_user.whatsapp_phone_id:
+        return {"error": "Token or Phone ID missing"}
 
     url = f"https://graph.facebook.com/v17.0/{current_user.whatsapp_phone_id}/messages"
 
@@ -116,6 +126,7 @@ def send_whatsapp_media(phone, media_url):
     return response.json()
 
 # ---------------- BULK TEXT ROUTE ---------------- #
+
 @app.route("/send-bulk-text", methods=["POST"])
 @login_required
 def send_bulk_text():
@@ -142,6 +153,7 @@ def send_bulk_text():
     return redirect(url_for("dashboard"))
 
 # ---------------- BULK MEDIA ROUTE ---------------- #
+
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -178,12 +190,6 @@ def send_bulk_media():
 
 # ---------------- RUN ---------------- #
 
-import os
-@app.route("/")
-def index():
-    return redirect(url_for("login"))
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
