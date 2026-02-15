@@ -4,3 +4,4 @@ Flask-Login
 requests
 python-dotenv
 Werkzeug
+gunicorn
