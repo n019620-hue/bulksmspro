@@ -298,7 +298,10 @@ def send_bulk_media():
 
     flash("Bulk Media Sent Successfully ✅", "success")
     return redirect(url_for("dashboard"))
-
+    
+@app.route("/maa-bijasan-traders")
+def maa_bijasan():
+    return render_template("client.html")
 # ---------------- RUN ---------------- #
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
